@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection</title>
+</head>
+
+<body>
+    <marquee>
+        <h2>Object Detection</h2>
+    </marquee>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script>
+        async function runObjectDetection() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            const model = await cocoSsd.load();
+
+            navigator.mediaDevices.getUserMedia({
+                    video: true
+                })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                });
+
+            video.addEventListener('play', function() {
+                setInterval(async function() {
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const predictions = await model.detect(video);
+                    predictions.forEach(prediction => {
+                        context.beginPath();
+                        context.lineWidth = "4";
+                        context.strokeStyle = "green";
+                        context.rect(prediction.bbox[0], prediction.bbox[1], prediction.bbox[2], prediction.bbox[3]);
+                        context.font = "18px Arial";
+                        context.fillStyle = "red";
+                        context.fillText(prediction.class, prediction.bbox[0], prediction.bbox[1] - 5);
+                        context.stroke();
+                    });
+                }, 1000 / 30); // 30 frames per second
+            });
+        }
+
+        runObjectDetection();
+    </script>
+</body>
+
+</html>
